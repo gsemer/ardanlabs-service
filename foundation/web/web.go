@@ -16,30 +16,31 @@ type Handler func(ctx context.Context, w http.ResponseWriter, r *http.Request) e
 type App struct {
 	*http.ServeMux
 	shutdown chan os.Signal
+	mw       []MidHandler
 }
 
 // NewApp creates an App value that handles a set of routes for the application.
-func NewApp(shutdown chan os.Signal) *App {
+func NewApp(shutdown chan os.Signal, mw ...MidHandler) *App {
 	return &App{
 		ServeMux: http.NewServeMux(),
 		shutdown: shutdown,
+		mw:       mw,
 	}
 }
 
-// HandleFunc sets a handler function
-func (a *App) HandleFunc(pattern string, handler Handler) {
+// HandleFunc sets a handler function for a given HTTP method and path pair
+// to the application server mux.
+func (a *App) HandleFunc(pattern string, handler Handler, mw ...MidHandler) {
+	handler = wrapMiddleware(mw, handler)
+	handler = wrapMiddleware(a.mw, handler)
 
 	h := func(w http.ResponseWriter, r *http.Request) {
 
-		// PUT ANY CODE WE WANT HERE
-
 		if err := handler(r.Context(), w, r); err != nil {
+			// ERROR HANDLING HERE
 			fmt.Println(err)
 			return
 		}
-
-		// PUT ANY CODE WE WANT HERE
-
 	}
 
 	a.ServeMux.HandleFunc(pattern, h)
