@@ -11,6 +11,12 @@ help:
 version:
 	go run apis/services/sales/main.go --version
 
+curl-live:
+	curl -il -X GET http://localhost:3000/liveness
+
+curl-ready:
+	curl -il -X GET http://localhost:3000/readiness
+
 # ==============================================================================
 # Define dependencies
 
