@@ -9,7 +9,7 @@ import (
 	"github.com/gsemer/ardanlabs-service/foundation/web"
 )
 
-// LOgger executes the logger middleware functionality.
+// Logger executes the logger middleware functionality.
 func Logger(log *logger.Logger) web.MidHandler {
 	m := func(handler web.Handler) web.Handler {
 
