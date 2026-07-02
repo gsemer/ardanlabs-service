@@ -1,0 +1,22 @@
+# github.com/ardanlabs/conf/v3 v3.12.0
+## explicit; go 1.23.0
+github.com/ardanlabs/conf/v3
+# github.com/arl/statsviz v0.8.0
+## explicit; go 1.23.0
+github.com/arl/statsviz
+github.com/arl/statsviz/internal/plot
+github.com/arl/statsviz/internal/static
+# github.com/go-json-experiment/json v0.0.0-20260623181947-01eb4420fa68
+## explicit; go 1.26
+github.com/go-json-experiment/json
+github.com/go-json-experiment/json/internal
+github.com/go-json-experiment/json/internal/jsonflags
+github.com/go-json-experiment/json/internal/jsonopts
+github.com/go-json-experiment/json/internal/jsonwire
+github.com/go-json-experiment/json/jsontext
+# github.com/google/uuid v1.6.0
+## explicit
+github.com/google/uuid
+# github.com/gorilla/websocket v1.5.3
+## explicit; go 1.12
+github.com/gorilla/websocket
