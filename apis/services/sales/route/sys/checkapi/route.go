@@ -4,8 +4,8 @@ import "github.com/gsemer/ardanlabs-service/foundation/web"
 
 // Routes adds specific routes for this group.
 func Routes(app *web.App) {
-	app.HandleFunc("GET /liveness", liveness)
-	app.HandleFunc("GET /readiness", readiness)
+	app.HandleFuncNoMiddleware("GET /liveness", liveness)
+	app.HandleFuncNoMiddleware("GET /readiness", readiness)
 	app.HandleFunc("GET /testerror", testError)
 	app.HandleFunc("GET /testpanic", testPanic)
 }
