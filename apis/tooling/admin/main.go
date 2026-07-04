@@ -47,7 +47,7 @@ func GenToken() error {
 		Roles []string
 	}{
 		RegisteredClaims: jwt.RegisteredClaims{
-			Subject:   "123456789",
+			Subject:   "57af22c4-c715-4a6b-aef9-5bb69dfdba79",
 			Issuer:    "service project",
 			ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(8760 * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),

@@ -94,7 +94,7 @@ func (ks *keyStore) LoadRSAKeys(fsys fs.FS) error {
 			publicPEM:  publicPEM,
 		}
 
-		ks.store[strings.TrimPrefix(dirEntry.Name(), ".pem")] = key
+		ks.store[strings.TrimSuffix(dirEntry.Name(), ".pem")] = key
 
 		return nil
 	}
