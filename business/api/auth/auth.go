@@ -177,8 +177,6 @@ func (a *Auth) opaPolicyEvaluation(ctx context.Context, regoScript string, rule 
 		return fmt.Errorf("bindings results [%v] ok[%v]", results, ok)
 	}
 
-	fmt.Println("\nTOKEN VALIDATED!")
-
 	return nil
 }
 
