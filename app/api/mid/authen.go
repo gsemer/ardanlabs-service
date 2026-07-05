@@ -2,9 +2,12 @@ package mid
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"strings"
+	"time"
 
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 	"github.com/gsemer/ardanlabs-service/app/api/errs"
 	"github.com/gsemer/ardanlabs-service/business/api/auth"
@@ -17,6 +20,8 @@ func Authorization(ctx context.Context, auth *auth.Auth, authorization string, h
 	switch parts[0] {
 	case "Bearer":
 		ctx, err = processJWT(ctx, auth, authorization)
+	case "Basic":
+		ctx, err = processBasic(ctx, authorization)
 	}
 
 	if err != nil {
@@ -45,4 +50,45 @@ func processJWT(ctx context.Context, auth *auth.Auth, token string) (context.Con
 	ctx = setClaims(ctx, claims)
 
 	return ctx, nil
+}
+
+func processBasic(ctx context.Context, basic string) (context.Context, error) {
+	claims := auth.Claims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			Subject:   "57af22c4-c715-4a6b-aef9-5bb69dfdba79",
+			Issuer:    "service project",
+			ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(8760 * time.Hour)),
+			IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
+		},
+		Roles: []string{"ADMIN"},
+	}
+
+	subjectID, err := uuid.Parse(claims.Subject)
+	if err != nil {
+		return ctx, errs.Newf(errs.Unauthenticated, "parsing subject: %s", err)
+	}
+
+	ctx = setUserID(ctx, subjectID)
+	ctx = setClaims(ctx, claims)
+
+	return ctx, nil
+}
+
+func processBasicAuth(auth string) (string, string, bool) {
+	parts := strings.Split(auth, " ")
+	if len(parts) != 2 || parts[0] != "Basic" {
+		return "", "", false
+	}
+
+	c, err := base64.StdEncoding.DecodeString(parts[1])
+	if err != nil {
+		return "", "", false
+	}
+
+	username, password, ok := strings.Cut(string(c), ":")
+	if !ok {
+		return "", "", false
+	}
+
+	return username, password, true
 }

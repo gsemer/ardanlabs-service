@@ -32,11 +32,19 @@ admin:
 	go run apis/tooling/admin/main.go
 
 # admin token
-# export TOKEN=eyJhbGciOiJSUzI1NiIsImtpZCI6IjU3YWYyMmM0LWM3MTUtNGE2Yi1hZWY5LTViYjY5ZGZkYmE3OSIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzZXJ2aWNlIHByb2plY3QiLCJzdWIiOiI1N2FmMjJjNC1jNzE1LTRhNmItYWVmOS01YmI2OWRmZGJhNzkiLCJleHAiOjE4MTQ3MTc1MTksImlhdCI6MTc4MzE4MTUxOSwiUm9sZXMiOlsiQURNSU4iXX0.bMTT808a7u71dJAUpfTRJlmZvkfdC7Twhztouvsgd1ZjI_llg4UhSmfC2YLjCEBrPPLeRyzscrDMgipsHki3jecSBgoAEO2syO1r2UmNzJ-xMQ_WPpciroQjXnpbKaw_Qnh-cnp6r4wgs5EgA-WE_UkhLINPQQzzlovfzjaQT3Bau239il1b4Kjays-nH13SE3kVbLpPvpCi0q1qWhc11Vli1j_P6Udl30slJelGANjuTrBwwQHSRXALsOeRoJPSHzzjXJNEpp8UHzp316B8amLQn7wq_2bURZ9p1v76kpse6dnCK01sZf38o5hDRq9P7qp1_njtFR17IrPGcry3ag
+# export TOKEN=eyJhbGciOiJSUzI1NiIsImtpZCI6IjU3YWYyMmM0LWM3MTUtNGE2Yi1hZWY5LTViYjY5ZGZkYmE3OSIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzZXJ2aWNlIHByb2plY3QiLCJzdWIiOiI1N2FmMjJjNC1jNzE1LTRhNmItYWVmOS01YmI2OWRmZGJhNzkiLCJleHAiOjE4MTQ3OTg5MzQsImlhdCI6MTc4MzI2MjkzNCwicm9sZXMiOlsiQURNSU4iXX0.iTti6r7Vnw0PBgT3XwTN2R9h0ZV2HGmk2B_UDXS8nw33NoyxNBQDZt9zuDbE--SdYONyVCBILNZUIoLoFFuknIwtdzR8ZkhsubwWW0EGKZVpKPrdIfw6Rg0wCWq3kjiMlg0zl_O0DhTp7x6cIQNCrWqjZbdIxnNzEINMgTAxaCh3JvErTIYrqNmETAz7yM1-2IjNc-LOwl4ImPrh2tsOQ76VuMgwuZWqVXYz8YX5ehvUNx0BAhklDnTkdZyQTfbTnBJecMr_H2FaSnjlXLeAB4j0kscdoPvfOtq9C3VK7vqF1vNdXJd-tOLf2SFfMAMAk5HfLlAHT4Y5UrXkxezlgw
 
 curl-auth:
 	curl -il \
 	-H "Authorization: Bearer ${TOKEN}" "http://localhost:3000/testauth"
+
+token:
+	curl -il \
+	--user "admin@example.com:gophers" http://localhost:6000/auth/token/57af22c4-c715-4a6b-aef9-5bb69dfdba79
+
+curl-auth2:
+	curl -il \
+	-H "Authorization: Bearer ${TOKEN}" "http://localhost:6000/auth/authenticate"
 
 # ==============================================================================
 # Define dependencies
@@ -64,12 +72,20 @@ AUTH_IMAGE      := $(BASE_IMAGE_NAME)/$(AUTH_APP):$(VERSION)
 # ==============================================================================
 # Building containers.
 
-build: sales
+build: sales auth
 
 sales:
 	docker build \
 	-f zarf/docker/dockerfile.sales \
 	-t ${SALES_IMAGE} \
+	--build-arg BUILD_REF=${VERSION} \
+	--build-arg BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ") \
+	.
+
+auth:
+	docker build \
+	-f zarf/docker/dockerfile.auth \
+	-t ${AUTH_IMAGE} \
 	--build-arg BUILD_REF=${VERSION} \
 	--build-arg BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ") \
 	.
@@ -100,20 +116,30 @@ dev-status:
 
 dev-load:
 	kind load docker-image $(SALES_IMAGE) --name $(KIND_CLUSTER)
+	kind load docker-image $(AUTH_IMAGE) --name $(KIND_CLUSTER)
 
 dev-apply:
+	kustomize build zarf/k8s/dev/auth | kubectl apply -f -
+	kubectl wait pods --namespace=$(NAMESPACE) --selector app=$(AUTH_APP) --timeout=120s --for=condition=Ready
+
 	kustomize build zarf/k8s/dev/sales | kubectl apply -f -
 	kubectl wait pods --namespace=$(NAMESPACE) --selector app=$(SALES_APP) --timeout=120s --for=condition=Ready
 
 dev-restart:
 	kubectl rollout restart deployment $(SALES_APP) --namespace=$(NAMESPACE)
+	
+dev-restart-auth:
+	kubectl rollout restart deployment $(AUTH_APP) --namespace=$(NAMESPACE)
 
 dev-update: build dev-load dev-restart
 
 dev-update-apply: build dev-load dev-apply
 
 dev-logs:
-	kubectl logs --namespace=$(NAMESPACE) -l app=$(SALES_APP) --all-containers=true -f --tail=100 --max-log-requests=6
+	kubectl logs --namespace=$(NAMESPACE) -l app=$(SALES_APP) --all-containers=true -f --tail=100 --max-log-requests=6 | go run apis/tooling/logfmt/main.go -service=$(SALES_APP)
+
+dev-logs-auth:
+	kubectl logs --namespace=$(NAMESPACE) -l app=$(AUTH_APP) --all-containers=true -f --tail=100 | go run apis/tooling/logfmt/main.go
 
 # ==============================================================================
 
@@ -122,6 +148,9 @@ dev-describe-deployment:
 
 dev-describe-sales:
 	kubectl describe pod --namespace=$(NAMESPACE) -l app=$(SALES_APP)
+
+dev-describe-auth:
+	kubectl describe pod --namespace=$(NAMESPACE) -l app=$(AUTH_APP)
 
 # ==============================================================================
 # Metrics and Tracing
