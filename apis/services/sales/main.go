@@ -15,8 +15,7 @@ import (
 	"github.com/ardanlabs/conf/v3"
 	"github.com/gsemer/ardanlabs-service/apis/services/api/debug"
 	"github.com/gsemer/ardanlabs-service/apis/services/sales/mux"
-	"github.com/gsemer/ardanlabs-service/business/api/auth"
-	"github.com/gsemer/ardanlabs-service/foundation/keystore"
+	"github.com/gsemer/ardanlabs-service/app/api/authclient"
 	"github.com/gsemer/ardanlabs-service/foundation/logger"
 	"github.com/gsemer/ardanlabs-service/foundation/web"
 )
@@ -70,9 +69,7 @@ func run(ctx context.Context, log *logger.Logger) error {
 			CORSAllowedOrigins []string      `conf:"default:*,mask"`
 		}
 		Auth struct {
-			KeysFolder string `conf:"default:zarf/keys/"`
-			ActiveKID  string `conf:"default:57af22c4-c715-4a6b-aef9-5bb69dfdba79"`
-			Issuer     string `conf:"default:service-project"`
+			Host string `conf:"default:http://auth-service.sales-system.svc.cluster.local:6000"`
 		}
 	}{
 		Version: conf.Version{
@@ -110,20 +107,11 @@ func run(ctx context.Context, log *logger.Logger) error {
 
 	log.Info(ctx, "startup", "status", "initializing authentication support")
 
-	ks := keystore.New()
-	if err := ks.LoadRSAKeys(os.DirFS(cfg.Auth.KeysFolder)); err != nil {
-		return fmt.Errorf("reading keys: %w", err)
+	logFunc := func(ctx context.Context, msg string, v ...any) {
+		log.Info(ctx, msg, v)
 	}
 
-	authCfg := auth.Config{
-		Log:       log,
-		KeyLookup: ks,
-	}
-
-	auth, err := auth.New(authCfg)
-	if err != nil {
-		return fmt.Errorf("constructing auth: %w", err)
-	}
+	authClient := authclient.New(cfg.Auth.Host, logFunc)
 
 	// -------------------------------------------------------------------------
 	// Start debug service
@@ -148,7 +136,7 @@ func run(ctx context.Context, log *logger.Logger) error {
 
 	api := http.Server{
 		Addr:         cfg.Web.APIHost,
-		Handler:      mux.WebAPI(log, auth, shutdown),
+		Handler:      mux.WebAPI(log, authClient, shutdown),
 		ReadTimeout:  cfg.Web.ReadTimeout,
 		WriteTimeout: cfg.Web.WriteTimeout,
 		IdleTimeout:  cfg.Web.IdleTimeout,
