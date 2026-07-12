@@ -4,6 +4,7 @@ package all
 import (
 	"github.com/gsemer/ardanlabs-service/api/http/api/mux"
 	"github.com/gsemer/ardanlabs-service/api/http/domain/checkapi"
+	"github.com/gsemer/ardanlabs-service/api/http/domain/testapi"
 	"github.com/gsemer/ardanlabs-service/foundation/web"
 )
 
@@ -19,5 +20,10 @@ func (add) Add(app *web.App, cfg mux.Config) {
 		Build: cfg.Build,
 		Log:   cfg.Log,
 		DB:    cfg.DB,
+	})
+
+	testapi.Routes(app, testapi.Config{
+		Log:        cfg.Log,
+		AuthClient: cfg.AuthClient,
 	})
 }
