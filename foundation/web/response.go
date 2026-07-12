@@ -3,6 +3,7 @@ package web
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 )
 
@@ -17,14 +18,14 @@ func Respond(ctx context.Context, w http.ResponseWriter, r *http.Request, data a
 
 	jsonData, err := json.Marshal(data)
 	if err != nil {
-		return err
+		return fmt.Errorf("web.Respond: marshal: %w", err)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 
 	if _, err := w.Write(jsonData); err != nil {
-		return err
+		return fmt.Errorf("web.Respond: write response: %w", err)
 	}
 
 	return nil

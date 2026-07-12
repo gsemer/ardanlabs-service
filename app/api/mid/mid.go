@@ -6,7 +6,7 @@ import (
 	"errors"
 
 	"github.com/google/uuid"
-	"github.com/gsemer/ardanlabs-service/business/api/auth"
+	"github.com/gsemer/ardanlabs-service/app/api/auth"
 )
 
 // Handler represents the handler function that needs to be called.
