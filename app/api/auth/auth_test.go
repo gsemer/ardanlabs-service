@@ -10,7 +10,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
-	"github.com/gsemer/ardanlabs-service/business/api/auth"
+	"github.com/gsemer/ardanlabs-service/app/api/auth"
 	"github.com/gsemer/ardanlabs-service/foundation/logger"
 )
 
