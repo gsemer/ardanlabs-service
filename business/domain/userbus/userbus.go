@@ -29,7 +29,7 @@ type Storer interface {
 	Query(ctx context.Context, filter QueryFilter, orderBy order.By, pageNumber int, rowsPerPage int) ([]User, error)
 	Count(ctx context.Context, filter QueryFilter) (int, error)
 	QueryByID(ctx context.Context, userID uuid.UUID) (User, error)
-	QueryByIDs(ctx context.Context, userID []uuid.UUID) ([]User, error)
+	// QueryByIDs(ctx context.Context, userID []uuid.UUID) ([]User, error)
 	QueryByEmail(ctx context.Context, email mail.Address) (User, error)
 }
 
@@ -155,15 +155,15 @@ func (c *Core) QueryByID(ctx context.Context, userID uuid.UUID) (User, error) {
 	return user, nil
 }
 
-// QueryByIDs finds the users by a specified User IDs.
-func (c *Core) QueryByIDs(ctx context.Context, userIDs []uuid.UUID) ([]User, error) {
-	user, err := c.storer.QueryByIDs(ctx, userIDs)
-	if err != nil {
-		return nil, fmt.Errorf("query: userIDs[%s]: %w", userIDs, err)
-	}
+// // QueryByIDs finds the users by a specified User IDs.
+// func (c *Core) QueryByIDs(ctx context.Context, userIDs []uuid.UUID) ([]User, error) {
+// 	user, err := c.storer.QueryByIDs(ctx, userIDs)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("query: userIDs[%s]: %w", userIDs, err)
+// 	}
 
-	return user, nil
-}
+// 	return user, nil
+// }
 
 // QueryByEmail finds the user by a specified user email.
 func (c *Core) QueryByEmail(ctx context.Context, email mail.Address) (User, error) {
