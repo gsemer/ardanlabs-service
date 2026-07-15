@@ -2,6 +2,7 @@
 package order
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -52,22 +53,25 @@ func Parse(fieldMappings map[string]string, orderBy string, defaultOrder By) (By
 	orgFieldName := strings.TrimSpace(orderParts[0])
 	fieldName, exists := fieldMappings[orgFieldName]
 	if !exists {
-		return By{}, fmt.Errorf("unknown order: %s", orgFieldName)
+		return By{}, validate.NewFieldsError(orgFieldName, errors.New("order field does not exist"))
 	}
 
+	var by By
 	switch len(orderParts) {
 	case 1:
-		return NewBy(fieldName, ASC), nil
+		by = NewBy(fieldName, ASC)
 
 	case 2:
 		direction := strings.TrimSpace(orderParts[1])
 		if _, exists := directions[direction]; !exists {
-			return By{}, validate.NewFieldsError(orderBy, fmt.Errorf("unknown direction: %s", direction))
+			return By{}, validate.NewFieldsError(orderBy, fmt.Errorf("unknown direction: %s", by.Direction))
 		}
 
-		return NewBy(fieldName, direction), nil
+		by = NewBy(fieldName, direction)
 
 	default:
-		return By{}, fmt.Errorf("unknown order: %s", orderBy)
+		return By{}, validate.NewFieldsError(orderBy, errors.New("unknown order field"))
 	}
+
+	return by, nil
 }

@@ -124,7 +124,7 @@ func (s *Store) Query(ctx context.Context, filter userbus.QueryFilter, orderBy o
 		return nil, fmt.Errorf("namedqueryslice: %w", err)
 	}
 
-	return toBusUserSlice(dbUsrs)
+	return toBusUsers(dbUsrs)
 }
 
 // Count returns the total number of users in the DB.

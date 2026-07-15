@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gsemer/ardanlabs-service/app/api/auth"
+	"github.com/gsemer/ardanlabs-service/business/domain/userbus"
 )
 
 // Handler represents the handler function that needs to be called.
@@ -17,6 +18,7 @@ type ctxKey int
 const (
 	claimKey ctxKey = iota + 1
 	userIDKey
+	userKey
 )
 
 func setClaims(ctx context.Context, claims auth.Claims) context.Context {
@@ -40,5 +42,19 @@ func GetUserID(ctx context.Context) (uuid.UUID, error) {
 	if !ok {
 		return uuid.UUID{}, errors.New("user not found in context")
 	}
+	return v, nil
+}
+
+func setUser(ctx context.Context, usr userbus.User) context.Context {
+	return context.WithValue(ctx, userKey, usr)
+}
+
+// GetUser returns the user from the context.
+func GetUser(ctx context.Context) (userbus.User, error) {
+	v, ok := ctx.Value(userKey).(userbus.User)
+	if !ok {
+		return userbus.User{}, errors.New("user not found in context")
+	}
+
 	return v, nil
 }
