@@ -7,11 +7,11 @@ import (
 	"fmt"
 	"net/mail"
 
-	"github.com/ardanlabs/service/foundation/logger"
 	"github.com/google/uuid"
 	"github.com/gsemer/ardanlabs-service/business/api/order"
 	"github.com/gsemer/ardanlabs-service/business/api/sqldb"
 	"github.com/gsemer/ardanlabs-service/business/domain/userbus"
+	"github.com/gsemer/ardanlabs-service/foundation/logger"
 	"github.com/jmoiron/sqlx"
 )
 

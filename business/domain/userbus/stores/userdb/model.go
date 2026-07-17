@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"net/mail"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -14,7 +15,7 @@ type user struct {
 	ID           uuid.UUID      `db:"user_id"`
 	Name         string         `db:"name"`
 	Email        string         `db:"email"`
-	Roles        []string       `db:"roles"`
+	Roles        string         `db:"roles"`
 	PasswordHash []byte         `db:"password_hash"`
 	Department   sql.NullString `db:"department"`
 	Enabled      bool           `db:"enabled"`
@@ -23,16 +24,16 @@ type user struct {
 }
 
 func toDBUser(usr userbus.User) user {
-	roles := make([]string, len(usr.Roles))
+	roleNames := make([]string, len(usr.Roles))
 	for i, role := range usr.Roles {
-		roles[i] = role.Name()
+		roleNames[i] = role.Name()
 	}
 
 	return user{
 		ID:           usr.ID,
 		Name:         usr.Name,
 		Email:        usr.Email.Address,
-		Roles:        roles,
+		Roles:        strings.Join(roleNames, ","),
 		PasswordHash: usr.PasswordHash,
 		Department: sql.NullString{
 			String: usr.Department,
@@ -49,16 +50,21 @@ func toBusUser(dbUsr user) (userbus.User, error) {
 		Address: dbUsr.Email,
 	}
 
-	roles := make([]userbus.Role, len(dbUsr.Roles))
-	for i, value := range dbUsr.Roles {
-		var err error
-		roles[i], err = userbus.ParseRole(value)
-		if err != nil {
-			return userbus.User{}, fmt.Errorf("parse role: %w", err)
-		}
+	roleNames := []string{}
+	if dbUsr.Roles != "" {
+		roleNames = strings.Split(dbUsr.Roles, ",")
 	}
 
-	bus := userbus.User{
+	roles := make([]userbus.Role, len(roleNames))
+	for i, value := range roleNames {
+		role, err := userbus.ParseRole(strings.TrimSpace(value))
+		if err != nil {
+			return userbus.User{}, fmt.Errorf("parse role %q: %w", value, err)
+		}
+		roles[i] = role
+	}
+
+	return userbus.User{
 		ID:           dbUsr.ID,
 		Name:         dbUsr.Name,
 		Email:        addr,
@@ -68,21 +74,19 @@ func toBusUser(dbUsr user) (userbus.User, error) {
 		Department:   dbUsr.Department.String,
 		DateCreated:  dbUsr.DateCreated.In(time.Local),
 		DateUpdated:  dbUsr.DateUpdated.In(time.Local),
-	}
-
-	return bus, nil
+	}, nil
 }
 
 func toBusUsers(dbUsers []user) ([]userbus.User, error) {
-	bus := make([]userbus.User, len(dbUsers))
+	users := make([]userbus.User, len(dbUsers))
 
 	for i, dbUsr := range dbUsers {
-		var err error
-		bus[i], err = toBusUser(dbUsr)
+		u, err := toBusUser(dbUsr)
 		if err != nil {
 			return nil, err
 		}
+		users[i] = u
 	}
 
-	return bus, nil
+	return users, nil
 }
